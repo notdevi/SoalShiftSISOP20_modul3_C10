@@ -20,14 +20,13 @@ Praktikum Modul 3 Sistem Operasi 2020
 
 ### Soal No. 4
 
+(a) Buatlah program C dengan nama "4a.c", yang berisi program untuk melakukan perkalian matriks. Ukuran matriks pertama adalah 4 x 2, dan matriks kedua 2 x 5. Isi dari matriks didefinisikan di dalam kodingan. Matriks nantinya akan berisi angka 1-20 (tidak perlu dibuat filter angka). Tampilkan matriks hasil perkalian tadi ke layar.
 
-***soal4.c***
+***soal4a.c***
 
-[kodingan]()
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4a.c)
 
 **PENJELASAN :**
-
-(a) Buatlah program C dengan nama "4a.c", yang berisi program untuk melakukan perkalian matriks. Ukuran matriks pertama adalah 4 x 2, dan matriks kedua 2 x 5. Isi dari matriks didefinisikan di dalam kodingan. Matriks nantinya akan berisi angka 1-20 (tidak perlu dibuat filter angka). Tampilkan matriks hasil perkalian tadi ke layar.
 
 Hal pertama yang dilakukan adalah mendefinisikan ukuran matriks dan mengisi elemen-elemennya dengan angka 1-20. Ukuran matriks di definisikan dengan syntax `#define`.
 
@@ -98,6 +97,118 @@ Kemudian dibuat loop untuk menampilkan hasil dari perkalian yaitu elemen-elemen 
 		printf("\n");
 	}
 ```
+
+(b) Buatlah program C dengan nama "4b.c". Program akan mengambil variabel hasil perkalian matriks dari program "4a.c" (program sebelumnya), dan menampilkan hasil matriks tersebut ke layar. Selanjutnya lakukan operasi penjumlahan 1 hingga n dari elemen matriks dan tampilkan ke layar dengan format seperti matriks.
+
+***soal4b.c***
+
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4b.c)
+
+**PENJELASAN :**
+
+Agar matriks hasil proses soal4a dapat diakses, maka digunakan shared memory.
+
+Untuk itu, pada kodingan soal a telah dilakukan pendeklarasian unique key `key_t key = 1500;`. Pada kodingan soal a juga dilakukan proses `write` array ke dalam shared memory.
+```c
+	int sizemem = sizeof(*test);
+	int shmid = shmget(key, 20, IPC_CREAT | 0666);
+
+	test = (int *)shmat(shmid, 0, 0);
+```
+Pada variable `shmid` disimpan sebuah identifier untuk segmen shared memory yang didapat dari fungsi `shmget(key, 20, IPC_CREAT | 0666)`. Agar bisa digunakan, maka segmen shared memory perlu di attach ke alamat dari proses dengan menggunakan fungsi `shmat(shmid, 0, 0)`.
+
+Dalam loop print matriks pada program sebelumnya, juga dibuat sebuah array 1 dimensi baru bernama `test` yang diisi dengan elemen-elemen matriks `matC`.
+```c
+			test[l] = matC[i][j];
+			l++;
+```
+Kemudian program melakukan detachment ketika telah selesai melakukan segmen shared memory dengan menggunakan fungsi `shmdt((void *) test);`.
+
+Pada kodingan soal4b, dilakukan bagian me-read data dari shared memory yang telah di write oleh program soal4a.
+Prosesnya kurang lebih sama dengan proses write, perbedaannya adalah tidak ada pengalokasian memori pada proses read.
+```c
+	int shmid = shmget(key, 20, IPC_CREAT | 0666);
+
+	test = (int *)shmat(shmid, 0, 0);
+	
+	...
+	
+	shmdt((void *) test);
+	shmctl(shmid, IPC_RMID, NULL);
+	
+```
+
+Untuk melakukan operasi penjumlahan, dibuat fungsi thread `penjumlahan` yang melakukan operasi penjumlahan dari elemen-elemen matriks sekaligus mencetak hasilnya. Pada fungsi ini, digunakan rumus `val = (((val+1)*val)/2);` dimana val adalah elemen matriks yang hendak dihitung.
+```c
+void *penjumlahan(void* arg) {
+	struct number* angka;
+	angka = (struct number *) arg;
+
+	ll val = angka->value;
+	val = (((val+1)*val)/2);
+	
+	printf("%llu\t", val);
+}
+Pada fungsi `main` dilakukan loop pembuatan thread sebanyak jumlah operasi yang dilakukan terhadap elemen yaitu 20. 
+```c
+for(int i=0; i<MAX_THREADS; i++) {
+		struct number* angka = (struct number*)malloc(sizeof(struct number));
+		angka->value = pindah[i];
+
+		pthread_create(&threads[i], NULL, penjumlahan, (void *)angka);
+		pthread_join(threads[i], NULL);
+		
+		if((i%5) == 4) {
+			printf("\n");
+		}	
+	}
+```
+Kemudian untuk menunggu thread selesai
+```c
+	for(int i=0; i<MAX_THREADS; i++) {
+		pthread_join(threads[i], NULL);
+	}
+```
+
+(c) Buatlah program untuk mengetahui jumlah file dan folder pada direktori saat ini dengan command `ls | wc -l` dengan menggunakan IPC.
+
+***soal4a.c***
+
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4c.c)
+
+**PENJELASAN :**
+karena hanya terdapat 1 buah pipe, maka dilakukan 1 kali fork untuk membuat 1 parent dan 1 child.
+```c
+child_id = fork();
+	if(child_id < 0) {
+		exit(EXIT_FAILURE);
+	}
+```
+Didalam child, dijalankan proses pemanggilan command `ls` yang akan me-list semua file dan folder pada current working directory.
+```c
+	if(child_id == 0) {
+		close(1);
+		dup(fd[1]);
+		close(fd[0]);
+		char *list[] = {"ls", NULL};
+		execv("/bin/ls", list);
+	}
+```
+Kemudian parent menunggu proses child selesai dengan `while((wait(&status)) > 0);`. Lalu menjalankan proses pemanggilan command `wc -l`.
+```c
+ else {
+		while((wait(&status)) > 0);
+		close(0);
+		dup(fd[0]);
+		close(fd[1]);
+		char *count[] = {"wc", "-l", NULL};
+		execv("/usr/bin/wc", count);
+	}
+```
+
+
+
+
 
 
 

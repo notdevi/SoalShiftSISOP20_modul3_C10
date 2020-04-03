@@ -172,7 +172,7 @@ Kemudian untuk menunggu thread selesai
 
 (c) Buatlah program untuk mengetahui jumlah file dan folder pada direktori saat ini dengan command `ls | wc -l` dengan menggunakan IPC.
 
-***soal4a.c***
+***soal4c.c***
 
 [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4c.c)
 

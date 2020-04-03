@@ -17,6 +17,108 @@ Untuk opsi `-f` user bisa menambahkan argumen file yang bisa dikategorikan seban
 
 Untuk opsi `-d` digunakan untuk melakukan kategori pasa suatu direktori.
 
+**PENJELASAN :**
+
+***soal3.c***
+
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/soal3.c)
+
+**PENJELASAN :**
+
+Deklarasi terlebih dahulu `pthread_t tid[100]'
+
+Lalu membuat fungsi untuk membedakan directory dengan file biasa
+```c
+int cekfile(const char *path) {
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+```
+
+Ini merupakan fungsi untuk melakukan command2 yang disuruh di int main
+```c
+void* pindah(void *arg) {
+    char *path;
+    // char ext[100];
+    path = (char *) arg;
+    char *pisah1, *array1[10], *pisah2, *array2[10];
+    // char arr[10] = ".";
+    int n = 0;
+    
+    pisah1 = strtok(path, ".");
+    while(pisah1 != NULL) {
+        // printf( "token %d = %s\n", n , pisah1);
+        array1[n] = pisah1;
+        n++;
+        pisah1 = strtok(NULL, ".");
+    }
+
+    printf("%s\n", array1[n-1]);       // nampilin ekstensi
+
+    int m = 0;
+    pisah2 = strtok(path, "/");
+    while(pisah2 != NULL) {
+        array2[m] = pisah2;
+        // printf( "token %d = %s\n", m , array2[m]);
+        m++;
+        pisah2 = strtok(NULL, "/");
+    }
+    
+    sprintf(array2[m-1], "%s.%s", array2[m-1], array1[n-1]);
+    // strcat(array2[m-1], arr);
+    // strcat(array2[m-1], array1[n-1]);
+    printf("%s\n", array2[m-1]);       // nampilin nama file
+
+    char ekstensi[50];
+    strcpy(ekstensi, array1[n-1]);
+    for(int x=0; ekstensi[x]; x++){
+        ekstensi[x] = tolower(ekstensi[x]);
+    }    
+
+    /* buat folder dari pisahan, ngecek folder yg namanya berupa ext uda ada apa belum, kalo blm dibuat,
+    setelah dibuat dipindah sesuai ext */
+
+    struct dirent *drct;
+    DIR *dir = opendir(workingdir), *diropen;
+    struct stat sb;
+
+    if(!(stat(dirname, &sb)==0 && S_ISDIR(sb.st_mode))) {
+        mkdir(ekstensi, 0777);
+    }
+}
+```
+
+Selanjutnya masuk ke program driver untuk menguji fungsi di atas
+```c
+int main(int argc, char const *argv[]){
+    int x;
+    //untuk menjalankan perintah -f
+	if(strcmp("-f", argv[1]) == 0) {
+		for(int x = 2; x < argc; x++) {
+			if(cekfile(argv[x])) {
+				pthread_create(&tid[x-2], NULL, pindah, (void *) argv[x]);
+			}
+		}
+		for(int x = 0; x < argc-2; x++) {
+			pthread_join(tid[x], NULL);
+		}
+	}
+	//untuk menjalankan peritah -d
+	else if(strcmp("-d", argv[1]) == 0 && argc == 3) {
+		
+	}
+	//untuk menjalankana perintah *
+	else if(strcmp("*", argv[1]) == 0 && argc == 2) {
+        
+	} 
+	//untuk argument yang tidak sesuai perintah
+	else {
+		printf("Invalid Arguments\n");
+	}
+}
+```
+
 ### Soal No. 4
 
 (a) Buatlah program C dengan nama "4a.c", yang berisi program untuk melakukan perkalian matriks. Ukuran matriks pertama adalah 4 x 2, dan matriks kedua 2 x 5. Isi dari matriks didefinisikan di dalam kodingan. Matriks nantinya akan berisi angka 1-20 (tidak perlu dibuat filter angka). Tampilkan matriks hasil perkalian tadi ke layar.

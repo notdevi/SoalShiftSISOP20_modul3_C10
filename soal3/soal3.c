@@ -78,12 +78,12 @@ int main(int argc, char const *argv[]){
             pthread_join(tid[x], NULL);
         }
     }
-    // else if(strcmp(argv[1], "*") == 0) {
+    else if(strcmp("-d", argv[1]) == 0 && argc == 3) {
+		
+	}
+	else if(strcmp("*", argv[1]) == 0 && argc == 2) {
         
-    // }
-    // else if(strcmp(argv[1], "-d") == 0) {
-        
-    // }
+	}
     else {
         printf("Argument Tidak Benar\n");
     }

@@ -40,10 +40,8 @@ Ini merupakan fungsi untuk melakukan command2 yang disuruh di int main
 ```c
 void* pindah(void *arg) {
     char *path;
-    // char ext[100];
     path = (char *) arg;
     char *pisah1, *array1[10], *pisah2, *array2[10];
-    // char arr[10] = ".";
     int n = 0;
     
     pisah1 = strtok(path, ".");

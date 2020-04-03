@@ -85,6 +85,6 @@ int main(int argc, char const *argv[]){
         
     // }
     else {
-        printf("Option or arguments are not valid\n");
+        printf("Argument Tidak Benar\n");
     }
 }

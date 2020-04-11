@@ -24,7 +24,7 @@ Untuk opsi `-d` digunakan untuk melakukan kategori pasa suatu direktori. Program
 
 Setiap 1 file yang dikategorikan dioperasikan oleh 1 thread agar bisa berjalan secara paralel sehingga proses kategori bisa berjalan lebih cepat. Program ini dilarang juga menggunakan fork-exec dan system.
 
-***soal3.c***
+***kategori.c***
 
 [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/kategori.c)
 

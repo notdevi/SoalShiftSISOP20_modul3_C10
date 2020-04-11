@@ -7,6 +7,282 @@ Praktikum Modul 3 Sistem Operasi 2020
 
 ### Soal No. 1
 
+Buatlah game Pokemon GO. Ketentuan permainan sebagai berikut :
+
+(a) Menggunakan IPC-shared memory, thread, fork-exec.
+
+(b) Bebas berkreasi asal tidak konflik dengan requirements yang ada.
+
+(c) Terdapat 2 code soal yaitu `soal2_traizone.c` dan `soal2_pokezone.c`.
+
+(d) soal2_traizone.c mengandung fitur :
+	
+NORMAL MODE - 1. CARI POKEMON
+
+   - tiap 10 detik punya 60% chance dapat pokemon sesuai encounter rate.
+   - hanya nentuin dapat atau tidak.
+   - menu CARI POKEMON berubah jadi BERHENTI MENCARI saat cari pokemon aktif.
+   - state mencari pokemon berhenti kalo nemu pokemon atau diberentiin player.
+   - kalo nemu pokemon masuk ke CAPTURE MODE.
+   - (opsional) nambah menu buat redirect ke CAPTURE MODE dari NORMAL MODE.
+
+Yang pertama dilakukan adalah mendeklarasikan state dari masing-masing mode dengan tipe data `boolean`, apabila mode sedang aktif, maka `true`, sebaliknya apabila mode sedang tidak aktif maka `false`.
+```c
+bool nrm_cari = false, nrm_pokedex = false, nrm_shop = false,
+     capture_mode = false, AP_decreasing = true;
+```
+Kemudian mendeklarasi item beserta mata uang dalam game. Item direpresentasikan sebagai `array` satu dimensi. Array `current_pokemon[2]` memiliki 2 indeks, yang pertama yaitu untuk mengidentifikasi tipe pokemon, sedangkan indeks kedua mengidentifikasi shining/tidaknya pokemon. 
+```c
+int (*item)[4], (*current_pokemon)[2], *isRunning;
+int aktif = 0, pokedollar = 100, pokeball = 10, lul_powder = 0, berry = 0;
+```
+Tiap-tiap pokemon memiliki karakteristik yang berbeda, sehingga dideklarasikan menggunakan `struct` bernama `Pokemon`.
+```c
+struct Pokemon {
+	char name[30];
+	bool exist;
+	double encounter_rate;
+	double escape_rate;
+	double capture_rate;
+	int value_dollar;
+	int AP;
+} pokemon[7], temp_pokemon;
+```
+Dalam soal ini digunakan 3 buah thread yaitu :
+ - `tid1[20]` yang berfungsi untuk menghandle pengurangan AP (Affection Point), efek Lullaby Powder, dan input.
+ - `tid2` yang berfungsi untuk melakukan pencarian pokemon setiap 10 detik sekali.
+ - `tid3` yang berfungsi untuk menghandle kemungkinan pokemon kabur yang didapat dari fitur pencarian pokemon.
+ 
+Untuk mengacak tipe-tipe pokemon, dibuat sebuah fungsi yang men-generate random number. Dan untuk mengacak kemungkinan dapatnya pokemon, digunakan fungsi yang men-generate angka bertipe data `double`, karena pada soal digunakan persen.
+```c
+int random_number(int number) {
+	return rand() % number;
+}
+
+bool chance(double chances) {
+	return rand() < chances * ((double)RAND_MAX + 1.0);
+}
+```
+Pada fungsi `void *cari_pokemon();`, dilakukan proses pencarian pokemon yang akan berjalan selama mode `cari pokemon` aktif. Apabila kemungkinan yang didapat dari fungsi `chance` memenuhi, maka pokemon berhasil didapatkan, dan state `nrm_cari` menjadi `true`. Sebaliknya, apabila pokemon tidak berhasil didapatkan akan keluar notifikasi "tidak ditemukan pokemon".
+```c
+void *cari_pokemon(void *ptr) {
+	tid2 = pthread_self();
+	while(aktif) {
+		sleep(10);
+		if(chance(0.6)) {
+			printf("\n\nYou Catch a Pokemon!\nSelect : ");
+			fflush(stdout);
+			nrm_cari = true;
+			aktif = 0;
+		} else {
+			printf("\n\nNo Pokemon Found, Keep Looking.\nSelect : ");
+			fflush(stdout);
+		}
+	}
+}
+```
+Pada fungsi `void pokemon_type();`, dilakukan pendeklarasian nama-nama, karakteristik pokemon beserta tipenya. `temp_pokemon.exist` di set `false` dan AP default di set sebanyak 100. 
+```c
+void pokemon_type() {
+	char type_normal[5][10] = 
+	     {"Bulbasaur", "Charmander", "Squirtle", "Rattata", "Caterpie"};
+	char type_rare[5][10] = 
+	     {"Pikachu", "Eevee", "Jigglypuff", "Snorlax", "Dragonite"};
+	char type_legend[5][10] = 
+	     {"Mew", "Mewtwo", "Moltres", "Zapdos", "Articuno"};
+
+	int random1 = random_number(5);
+	if(*current_pokemon[0] == 3) {
+		strcpy(temp_pokemon.name, type_legend[random1]);
+		temp_pokemon.encounter_rate = 0.05;
+		temp_pokemon.escape_rate = 0.2;
+		temp_pokemon.capture_rate = 0.3;
+		temp_pokemon.value_dollar = 200;
+	} else if(*current_pokemon[0] == 2) {
+		strcpy(temp_pokemon.name, type_rare[random1]);
+		temp_pokemon.encounter_rate = 0.15;
+		temp_pokemon.escape_rate = 0.1;
+		temp_pokemon.capture_rate = 0.5;
+		temp_pokemon.value_dollar = 100;
+	} else {
+		strcpy(temp_pokemon.name, type_normal[random1]);
+		temp_pokemon.encounter_rate = 0.8;
+		temp_pokemon.escape_rate = 0.05;
+		temp_pokemon.capture_rate = 0.7;
+		temp_pokemon.value_dollar = 80;
+	}
+	temp_pokemon.exist = false;
+	temp_pokemon.AP = 100;
+```
+Apabila indeks kedua dari array `current_pokemon` bernilai 1, maka pokemon tersebut SHINING. Sehingga, `escape_rate` bertambah, `capture_rate` berkurang, dan `value_dollar` bertambah.
+```c
+if(*current_pokemon[1] == 1) {
+		strcat(temp_pokemon.name, " - SHINING");
+		temp_pokemon.escape_rate += 0.05;
+		temp_pokemon.capture_rate -= 0.2;
+		temp_pokemon.value_dollar += 5000;
+	}
+}
+```
+Pada fungsi `void *AP_decrease();`, akan dilakukan operasi pengurangan AP per 10 detik. Apabila AP mencapai 0, maka pokemon bisa lepas atau APnya di reset menjadi 50.
+```c
+void *AP_decrease(void *pokemonAP) {
+	while(((struct Pokemon*)pokemonAP)->exist == false) {
+		while(((struct Pokemon*)pokemonAP)->AP <= 100 && capture_mode == false) {
+			sleep(10);
+			((struct Pokemon*)pokemonAP)->AP -= 10;
+
+			if(((struct Pokemon*)pokemonAP)->AP == 0) {
+				if(chance(0.9)) {
+					printf("Pokemon %s Kabur!\n", ((struct Pokemon*)pokemonAP)->name);
+					((struct Pokemon*)pokemonAP)->exist = true;
+					break;
+				} else {
+					printf("AP Pokemon %s Reset Menjadi 50\n", ((struct Pokemon*)pokemonAP)->name);
+					((struct Pokemon*)pokemon)->AP = 50;
+				}
+			}
+		}
+	}
+}
+```
+Pada fungsi `void *pokemon_escape();`, pada saat permainan sedang dalam CAPTURE MODE, pokemon yang ditemukan memiliki kemungkinan untuk kabur. Setiap 20 detik, apabila `escape_rate` yang didapat dari fungsi `chance` memenuhi, maka pokemon akan kabur.
+```c
+void *pokemon_escape(void *ptr) {
+	tid3 = pthread_self();
+	
+	while(capture_mode) {
+		sleep(20);
+		if(chance(temp_pokemon.escape_rate)) {
+			printf("Pokemon Kabur!\n");
+			printf("kembali ke MENU . . .\n");
+			capture_mode = false;
+			sleep(1);
+			break;
+		}
+	}
+}
+```
+Pada fungsi `void *lullaby_powder();`, dijalankan efek dari item Lullaby Powder. `escape_rate` dari pokemon akan di set ke 0, dan `capture_rate` bertambah 20% atau 0.2. Saat efeknya hilang akan dikembalikan ke kondisi awal.
+```c
+void *lullaby_powder(void *ptr) {
+	temp_pokemon.escape_rate = 0.0;
+	double temp_escape_rate = temp_pokemon.escape_rate;
+	temp_pokemon.capture_rate += 0.2;
+	sleep(10);
+	temp_pokemon.escape_rate = temp_escape_rate;
+	temp_pokemon.capture_rate -= 0.2;
+}
+```
+
+NORMAL MODE - 2. POKEDEX
+   - tampilkan list pokemon dan APnya.
+   - maksimal pokemon 7.
+   - kalau menangkap >7, yang baru ditangkap langsung dilepas tapi dpt pokedollar.
+   - initial value AP = 100 berkurang -10 AP per 10 detik mulai waktu ditangkap.
+   - jika AP = 0, pokemon punya 90% chance kabur tanpa ngasi pokeball dan
+     10% chance untuk reset AP jadi 50.
+   - AP tidak berkuran di CAPTURE MODE.
+   - bisa ngelepas pokemen yang ditangkap dan dapat pokedollar.
+   - bisa memberi berry ke semua pokemon untuk naikin AP +10 (1 berry untuk semua).
+
+Pada fungsi `void pokedex()`, selama dalam mode pokedex `nrm_pokedex = true`, pertama-tama akan ditampilkan option dari menu pokedex. Kemudian player akan diminta menginput option yang diinginkan dengan fungsi `fgets(input_pokemon, 20, stdin);`.
+```c
+void pokedex() {
+	char input_pokemon[20];
+
+	while(nrm_pokedex) {
+		int flag = 0;
+		printf("\n--== POKEDEX ==--");
+		printf("\n(1) Lihat Pokemon");
+		printf("\n(2) Beri Makan Berry");
+		printf("\n(3) Lepas Pokemon");
+		printf("\n(4) Exit");
+		printf("\n Select : ");
+
+		fgets(input_pokemon, 20, stdin);
+		input_pokemon[strlen(input_pokemon)-1] = '\0';
+```
+Apabila player menginput "1" maka akan ditampilkan list pokemon yang berhasil ditangkap. Ada tidaknya pokemon dicek dengan kondisi `if(pokemon[i].exist == false)`. Apabila pokemon pada indeks tertentu tidak ada, maka keluar notifikasi `printf("Anda Belum Punya Pokemon.\n");`.
+```c
+		if(strcmp("Lihat Pokemon", input_pokemon)==0 || strcmp("1", input_pokemon) == 0) {
+			for(int i=0; i<7; i++) {
+				if(pokemon[i].exist == false) {
+					printf("POKEMON KE-%d :\n", i+1);
+					printf("Nama : %s\n", pokemon[i].name);
+					printf("AP   : %d\n", pokemon[i].AP);
+					flag = 1;
+				}
+				if(!flag) {
+					printf("Anda Belum Punya Pokemon.\n");
+				}
+			}
+		}
+```
+Apabila player menginput "2" maka player akan memberikan berry ke pokemon. Pertama akan dicek apakah terdapat stok berry `if(berry > 0)`, jika ada maka berry akan diberikan ke semua pokemon dan APnya akan bertambah 10, dan stok berry berkurang. Jika berry tidak cukup akan keluar notifikasi. 
+```c
+		else if(strcmp("Beri Makan Berry", input_pokemon)==0 || strcmp("2", input_pokemon) == 0) {
+			if(berry > 0) {
+				for(int i=0; i<7; i++) {
+					if(pokemon[i].exist) {
+						pokemon[i].AP += 10;
+						flag = 1;
+					}
+				}
+				if(flag) {
+					berry--;
+					printf("Berry Telah Diberikan.\n");
+				} else {
+					printf("Anda Belum Punya Pokemon.\n");
+				}
+			} else {
+				printf("Anda Tidak Punya Berry.\n");
+			}
+		}
+```
+Apabila player menginput "3", maka player akan melepas suatu pokemon. Pertama akan dilakukan pengecekkan ada/tidaknya pokemon pada pokedex. Lalu ditampilkan list pokemon.
+```c
+			for(int i=0; i<7; i++) {
+				if(!pokemon[i].exist) {
+					printf("Inventory %d : %s\n", i+1, pokemon[i].name);
+					flag = 1;
+				}
+			}
+```
+Apabila `flag == 1`, maka pokemon ada dan player akan diminta menginput pokemon yang hendak dilepas.
+```c
+			if(flag) {
+				printf("Pilih Pokemon yang Mau Dilepas : ");
+				int lepas;				
+				scanf("%d", &lepas);
+				getchar();
+				if(!pokemon[lepas-1].exist && lepas > 0) {
+					pokemon[lepas-1].exist = true;
+					pokedollar += pokemon[lepas-1].value_dollar;
+					printf("Pokemon %s Berhasil Dilepas.\n", pokemon[lepas-1].name);
+					printf("Anda Mendapat %d Pokedollar.\n", pokemon[lepas-1].value_dollar);
+				} else {
+					printf("Pilihan Tidak Valid\n");
+				}
+			} else {
+				printf("Anda Tidak Punya Pokemon\n");	
+			}
+		}
+```
+Apabila player menginput "4", maka akan keluar dari menu pokedex dengan men-set `nrm_pokedex = false;`. Selain input diatas, tidak dianggap valid.
+```c
+else if(strcmp("Exit", input_pokemon)==0 || strcmp("4", input_pokemon) == 0) {
+			printf("kembali ke MENU . . .\n");
+			nrm_pokedex = false;
+			sleep(1);
+			break;
+		} else {
+			printf("Pilihan Tidak Valid\n");
+		}
+```
+
+
+
 ### Soal No. 2
 
 ### Soal No. 3

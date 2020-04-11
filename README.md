@@ -544,6 +544,108 @@ int main() {
 
 **PENJELASAN :**
 
+Pada fungsi `void shutdown();` dilakukan proses `kill` program dengan menggunakan fork. Pada Child process dilakukan `kill` pada `soal1_traizone.c` dengan menggunakan fungsi execv. Kemudian setelah wait selesai, pada parent process dilakukan `kill` pada `soal1_pokemon.c`.
+```c
+void shutdown() {
+	pid_t child_id;
+	int status;
+	
+	child_id = fork();
+	if(child_id == 0) {
+		char *argv[] = {"killall", "soal1_traizone", NULL};
+		execv("/usr/bin/killall", argv);
+	} else {
+		while((wait(&status)) > 0);
+		char *argv[] = {"killall", "soal1_pokezone", NULL};
+		execv("/usr/bin/killall", argv);
+	}
+}
+```
+Pada fungsi `void *random_pokemon(void *ptr);` dilakukan proses pengambilan random pokemon. Apabila chance yang didapat lebih dari normal, maka akan di cek lagi apakah lebih dari rare, jika iya maka `current_pokemon[0]` merupakan tipe 3 yaitu legendary. Sedangkan apabila kurang dari rare tapi lebih dari normal maka `current_pokemon[0]` merupakan tipe 2 yaitu rare. Selain itu tipe normal.
+```c
+void *random_pokemon(void *ptr) {
+	while(1) {
+		double random = rand();
+		double normal = chance(0.8);
+		double rare = normal + chance(0.15);
+
+		if(random > normal) {
+			if(random > rare) {
+				*current_pokemon[0] = 3;
+			} else {
+				*current_pokemon[0] = 2;
+			}
+		} else {
+			*current_pokemon[0] = 1;
+		}
+		if((rand() < chance(0.000125))) {
+			*current_pokemon[1] = 1;
+		} else {
+			*current_pokemon[1] = 0;
+		}
+		sleep(1);
+	}
+}
+```
+Pada fungsi main dijalankan menu dimana player akan memilih apa yang hendak dilakukan, lalu fungsi akan dipanggil. 
+```c
+int main() {
+	int running = 1;
+
+	key_t key = 1600;
+	int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
+  	item = shmat(shmid, NULL, 0);
+  	current_pokemon = shmat(shmid, NULL, 0);
+  	isRunning = shmat(shmid, NULL, 0);
+
+	isRunning = &running;
+
+	for(int i=0; i<4; i++) {
+		*item[i] = 100;
+	}
+	
+	pthread_t tid[3];
+
+	if(pthread_create(&tid[0], NULL, jual_item, NULL)){
+    		printf("thread 1 failed\n");
+  	}
+	if(pthread_create(&tid[1], NULL, random_pokemon, NULL)){
+    		printf("thread 2 failed\n");
+	}
+	
+	while(running) {
+		int input;
+
+		printf("\n--== POKE*ZONE ==--");
+		printf("\n(1) Shutdown Game");
+		printf("\n(2) Jual Item");
+		printf("\n(3) Random Pokemon");
+		printf("\n Select : ");
+		scanf("%d", &input);
+		
+		if(input == 1) {
+			shutdown();
+			running = 0;
+		} 
+//		else if(input == 2) {
+//			jual_item();
+//			running = 1;
+//		} else if(input == 3) {
+//			random_pokemon();
+//			running = 1;
+//		} else {
+//			printf("input tidak valid\n");
+//		}		
+	}
+	
+	shmdt(item);
+  	shmdt(current_pokemon);
+  	shmdt(isRunning);
+  	shmctl(shmid, IPC_RMID, NULL);
+
+	return 0;
+}
+```
 
 ### Soal No. 2
 

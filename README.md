@@ -289,6 +289,7 @@ else if(strcmp("Exit", input_pokemon)==0 || strcmp("4", input_pokemon) == 0) {
 NORMAL MODE - 3. SHOP
    - membeli item dari soal2_pokezone.
    - max item yang dapat dibeli dan dimiliki player adalah 99.
+
 Pada fungsi `void shop()`, selama dalam mode pokedex `nrm_shop = true`, pertama-tama akan ditampilkan item-item yang dapat dibeli beserta inventory dan Pokedollar pemain. Kemudian player akan diminta menginput option yang diinginkan dengan fungsi `fgets(input_shop, 20, stdin);`.
 ```c
 	while(nrm_shop) {
@@ -379,6 +380,7 @@ CAPTURE MODE
    - ITEM -> menjalankan efek lullaby powder.
    - KELUAR -> keluar dari CAPTURE MODE ke NORMAL MODE.
    - pokemon memiliki peluang kabur sesuai persentasi escape_rate.
+   
 Pada fungsi `void capture();`, akan dibuat thread yang memanggil fungsi `pokemon_escape`. 
 Selama berada pada CAPTURE MODE `capture_mode = true`, pertama-tama akan ditampilkan menu dari capture mode, lalu player diminta menginput option yang diinginkan.
 ```c

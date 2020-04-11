@@ -472,6 +472,7 @@ void *penjumlahan(void* arg) {
 	
 	printf("%llu\t", val);
 }
+```
 Pada fungsi `main` dilakukan loop pembuatan thread sebanyak jumlah operasi yang dilakukan terhadap elemen yaitu 20. 
 ```c
 for(int i=0; i<MAX_THREADS; i++) {

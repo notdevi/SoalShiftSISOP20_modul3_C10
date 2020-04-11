@@ -389,11 +389,11 @@ int main(int argc, char const *argv[]) {
             scanf("%s", pass);
             for(i = 0; i< count; i++){
                 if (strcmp(listname[i], username) == 0 && strcmp(listpass[i], pass) == 0) {
-                    printf("login berhasil\n");
+                    printf("login success\n");
                     send(sock , msg1 , strlen(msg1) , 0 );  //send msg1 ke server
                 }
                 else  {
-                    printf("login gagal\n");
+                    printf("login failed\n");
                     send(sock , msg2 , strlen(msg2) , 0 );  //send msg2 ke server
                 }
             }

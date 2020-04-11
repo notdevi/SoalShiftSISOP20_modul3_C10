@@ -8,13 +8,16 @@
 #include <stdbool.h>
 #include <termios.h>
 
-int (*item)[5], (*current_pokemon)[2], *isRunning;
+int (*item)[4], (*current_pokemon)[2], *isRunning;
 int aktif = 0, pokedollar = 100, pokeball = 10, lul_powder = 0, berry = 0;
 
 bool nrm_cari = false, nrm_pokedex = false, nrm_shop = false,
      capture_mode = false, AP_decreasing = true;
 
-pthread_t tid1[20], tid2, tid3;
+pthread_t tid1[20], 	// untuk menghandle pengurangan AP, efek lullaby, dan input.
+	  tid2, 	// untuk melakukan pencarian pokemon setiap 10 detik.
+	  tid3;		// untuk menghandle kemungkinan pokemon kabur yang didapat 
+			// dari fitur cari pokemon.
 
 struct Pokemon {
 	char name[30];
@@ -27,6 +30,16 @@ struct Pokemon {
 } pokemon[7], temp_pokemon;
 
 struct Pokemon *(pokemonAP[7]);
+
+void normal();
+void capture();
+void pokedex();
+void shop();
+void pokemon_type();
+void *cari_pokemon();
+void *AP_decrease();
+void *pokemon_escape();
+void *lullaby_powder();
 
 int random_number(int number) {
 	return rand() % number;
@@ -156,8 +169,8 @@ void *lullaby_powder(void *ptr) {
    - bisa memberi berry ke semua pokemon untuk naikin AP +10 (1 berry untuk semua).
 */
 
-void *pokedex() {
-	char input_pokemon[1];
+void pokedex() {
+	char input_pokemon[20];
 
 	while(nrm_pokedex) {
 		int flag = 0;
@@ -168,9 +181,10 @@ void *pokedex() {
 		printf("\n(4) Exit");
 		printf("\n Select : ");
 
-		fgets(input_pokemon, 1, stdin);
+		fgets(input_pokemon, 20, stdin);
+		input_pokemon[strlen(input_pokemon)-1] = '\0';
 
-		if(strcmp("1", input_pokemon) == 0) {
+		if(strcmp("Lihat Pokemon", input_pokemon)==0 || strcmp("1", input_pokemon) == 0) {
 			for(int i=0; i<7; i++) {
 				if(pokemon[i].exist == false) {
 					printf("POKEMON KE-%d :\n", i+1);
@@ -182,7 +196,7 @@ void *pokedex() {
 					printf("Anda Belum Punya Pokemon.\n");
 				}
 			}
-		} else if(strcmp("2", input_pokemon) == 0) {
+		} else if(strcmp("Beri Makan Berry", input_pokemon)==0 || strcmp("2", input_pokemon) == 0) {
 			if(berry > 0) {
 				for(int i=0; i<7; i++) {
 					if(pokemon[i].exist) {
@@ -199,7 +213,7 @@ void *pokedex() {
 			} else {
 				printf("Anda Tidak Punya Berry.\n");
 			}
-		} else if(strcmp("3", input_pokemon) == 0) {
+		} else if(strcmp("Lepas Pokemon", input_pokemon)==0 || strcmp("3", input_pokemon) == 0) {
 			for(int i=0; i<7; i++) {
 				if(!pokemon[i].exist) {
 					printf("Inventory %d : %s\n", i+1, pokemon[i].name);
@@ -222,10 +236,10 @@ void *pokedex() {
 			} else {
 				printf("Anda Tidak Punya Pokemon\n");	
 			}
-		} else if(strcmp("4", input_pokemon) == 0) {
+		} else if(strcmp("Exit", input_pokemon)==0 || strcmp("4", input_pokemon) == 0) {
 			printf("kembali ke MENU . . .\n");
 			nrm_pokedex = false;
-			sleep(2);
+			sleep(1);
 			break;
 		} else {
 			printf("Pilihan Tidak Valid\n");
@@ -241,7 +255,7 @@ void *pokedex() {
 void shop() {
 	int inventory = 99 - (pokeball + lul_powder + berry), jml;
 	int hrg_pokeball = 5, hrg_lulpowder = 60, hrg_berry = 15;	
-	char input_shop[1];
+	char input_shop[20];
 
 	while(nrm_shop) {
 		printf("\n--== SHOP ==--");
@@ -255,13 +269,14 @@ void shop() {
 		printf("\nPokedollar : %d", pokedollar);
 		printf("\n Select : ");
 
-		fgets(input_shop, 1, stdin);
+		fgets(input_shop, 20, stdin);
+		input_shop[strlen(input_shop)-1] = '\0';
 
 		if(strcmp("1", input_shop) == 0) {
 			printf("Beli Pokeball. Jumlah : \n");
 			scanf("%d", &jml);
 
-			if((inventory-jml) >= 0 && jml <= 99) {
+			if((inventory-jml) >= 0 || jml <= 99) {
 				if(pokedollar >= jml*hrg_pokeball) {
 					pokedollar -= jml*hrg_pokeball;
 					pokeball += jml;
@@ -278,7 +293,7 @@ void shop() {
 			printf("Beli Lullaby Powder. Jumlah : \n");
 			scanf("%d", &jml);
 
-			if((inventory-jml) >= 0 && jml <= 99) {
+			if((inventory-jml) >= 0 || jml <= 99) {
 				if(pokedollar >= jml*hrg_lulpowder) {
 					pokedollar -= jml*hrg_lulpowder;
 					lul_powder += jml;
@@ -295,7 +310,7 @@ void shop() {
 			printf("Beli Berry. Jumlah : \n");
 			scanf("%d", &jml);
 
-			if((inventory-jml) >= 0 && jml <= 99) {
+			if((inventory-jml) >= 0 || jml <= 99) {
 				if(pokedollar >= jml*hrg_berry) {
 					pokedollar -= jml*hrg_berry;
 					berry += jml;
@@ -311,7 +326,7 @@ void shop() {
 		} else if(strcmp("4", input_shop) == 0) {
 			printf("kembali ke MENU . . .\n");
 			nrm_shop = false;
-			sleep(2);
+			sleep(1);
 			break;
 		} else {
 			printf("Pilihan Tidak Valid\n");
@@ -328,7 +343,7 @@ void shop() {
 */
 
 void capture() {
-	char input_capture[1];
+	char input_capture[20];
 	int i;
 	nrm_cari = false;
 	pokemon_type();
@@ -344,15 +359,16 @@ void capture() {
 		printf("\n(3) Exit");
 		printf("\n Select : ");
 
-		fgets(input_capture, 1, stdin);
+		fgets(input_capture, 20, stdin);
+		input_capture[strlen(input_capture)-1] = '\0';
 	
 		if(strcmp("1", input_capture) == 0) {
 			if(pokeball != 0) {
 				pokeball--;
-				sleep(2);
+				sleep(1);
 				if(chance(temp_pokemon.capture_rate)) {
 					printf("Pokemon %s Captured!\n", temp_pokemon.name);
-					sleep(2);
+					sleep(1);
 					for(i=0; i<7; i++) {
 						if(pokemon[i].exist) {
 							pokemon[i] = temp_pokemon;
@@ -377,7 +393,7 @@ void capture() {
 
 			printf("kembali ke MENU . . .\n");
 			capture_mode = false;
-			sleep(2);
+			sleep(1);
 			break;
 		} else if(strcmp("2", input_capture) == 0) {
 			if(lul_powder != 0) {
@@ -388,10 +404,11 @@ void capture() {
 			} else {
 				printf("Lullaby Powder Tidak Mencukupi.\n");
 			}
-		} else if(strcmp("4", input_capture) == 0) {
+		} else if(strcmp("3", input_capture) == 0) {
+			pthread_cancel(tid3);
 			printf("kembali ke MENU . . .\n");
 			capture_mode = false;
-			sleep(2);
+			sleep(1);
 			break;
 		} else {
 			printf("Pilihan Tidak Valid\n");
@@ -404,7 +421,7 @@ void capture() {
 
 void normal() {
 	char choice1[20], choice2[20] = "cari pokemon", choice3[20] = "berhenti mencari";
-	char input_normal[1];
+	char input_normal[20];
 
 	strcpy(choice1, choice2);
 
@@ -423,7 +440,8 @@ void normal() {
 		printf("\n(5) Exit");
 		printf("\n Select : ");
 		
-		fgets(input_normal, 1, stdin);
+		fgets(input_normal, 20, stdin);
+		input_normal[strlen(input_normal)-1] = '\0';
 
 		if(strcmp("1", input_normal) == 0) {
 			if(pthread_create(&tid1[0], NULL, cari_pokemon, NULL)) {
@@ -445,9 +463,9 @@ void normal() {
 			if(nrm_cari) {
 				aktif = 0;
 				printf("\nMemindahkan ke CAPTURE MODE . . .\n");
-				sleep(2);
+				sleep(1);
 				capture_mode = true;
-				capture;
+				capture();
 			} else {
 				printf("Belum Menemukan Pokemon\n");
 			}
@@ -482,5 +500,3 @@ int main() {
 
 	return 0;
 }
-	     
-

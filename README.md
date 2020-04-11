@@ -540,7 +540,7 @@ int main() {
 ```
 (e) soal2_pokezone.c mengandung fitur :
 
-***soal1_pokezone.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_pokemon.c)
+***soal1_pokezone.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_pokezone.c)
 
 **PENJELASAN :**
 

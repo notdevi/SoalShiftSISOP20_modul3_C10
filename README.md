@@ -26,11 +26,11 @@ Setiap 1 file yang dikategorikan dioperasikan oleh 1 thread agar bisa berjalan s
 
 ***soal3.c***
 
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/soal3.c)
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/kategori.c)
 
 **PENJELASAN :**
 
-Deklarasi terlebih dahulu `pthread_t tid[100]'
+Deklarasi terlebih dahulu `pthread_t tid[100]` serta `char wdasal[1024]`
 
 Lalu membuat fungsi untuk membedakan directory dengan file biasa
 ```c
@@ -41,84 +41,303 @@ int cekfile(const char *path) {
 }
 ```
 
-Ini merupakan fungsi untuk melakukan command2 yang disuruh di int main
+Ini merupakan fungsi untuk memindahkan file dari direktori a ke direktori tempat file dituju, jadi digunakan saat menjalankan perintah `-d`.
 ```c
-void* pindah(void *arg) {
-    char *path;
-    path = (char *) arg;
-    char *pisah1, *array1[10], *pisah2, *array2[10];
-    int n = 0;
-    
-    pisah1 = strtok(path, ".");
-    while(pisah1 != NULL) {
-        // printf( "token %d = %s\n", n , pisah1);
-        array1[n] = pisah1;
-        n++;
-        pisah1 = strtok(NULL, ".");
-    }
+void* pindahd(void *arg) {
+	char *path;
+	char format[100], dirname[100], a[100], b[100], namafile[100];
+	path = (char *) arg;
+	
+	strcpy(a, arg);
+	strcpy(b, arg);
+	char *split1, *split2, *titik[5], *slash[5];
+	int n = 0;
+	split1 = strtok(path, ".");
+	while(split1 != NULL) {
+		titik[n] = split1;
+		n++;
+		split1 = strtok(NULL, ".");
+	}
 
-    printf("%s\n", array1[n-1]);       // nampilin ekstensi
+	if(n != 1) {
+		int a;
+		for(a = 0; a < strlen(titik[n-1]); a++) {
+			format[a] = tolower(titik[n-1][a]);
+		}
+	}
+	else if (n == 1) {
+		strcpy(format, "Unknown");
+	}
 
-    int m = 0;
-    pisah2 = strtok(path, "/");
-    while(pisah2 != NULL) {
-        array2[m] = pisah2;
-        // printf( "token %d = %s\n", m , array2[m]);
-        m++;
-        pisah2 = strtok(NULL, "/");
-    }
-    
-    sprintf(array2[m-1], "%s.%s", array2[m-1], array1[n-1]);
-    // strcat(array2[m-1], arr);
-    // strcat(array2[m-1], array1[n-1]);
-    printf("%s\n", array2[m-1]);       // nampilin nama file
+	n = 0;
+	split2 = strtok(b, "/");
+	while(split2 != NULL) {
+		slash[n] = split2;
+		n++;
+		split2 = strtok(NULL, "/");
+	}
+	strcpy(namafile, slash[n-1]);
 
-    char ekstensi[50];
-    strcpy(ekstensi, array1[n-1]);
-    for(int x=0; ekstensi[x]; x++){
-        ekstensi[x] = tolower(ekstensi[x]);
-    }    
+	strcpy(dirname, wdasal);
+	strcat(dirname, "/");
+	strcat(dirname, format);
 
-    /* buat folder dari pisahan, ngecek folder yg namanya berupa ext uda ada apa belum, kalo blm dibuat,
-    setelah dibuat dipindah sesuai ext */
+	memset(format, 0, 100);
+	mkdir(dirname, 0777);
 
-    struct dirent *drct;
-    DIR *dir = opendir(workingdir), *diropen;
-    struct stat sb;
+	FILE *psrc, *ptjn;
 
-    if(!(stat(dirname, &sb)==0 && S_ISDIR(sb.st_mode))) {
-        mkdir(ekstensi, 0777);
-    }
+	psrc = fopen(a, "r");
+	strcat(dirname, "/");
+	strcat(dirname, namafile);
+	ptjn = fopen(dirname, "w");
+	if(!psrc) {
+		printf("error\n");
+	}
+	if(!ptjn) {
+		printf("error\n");
+	}
+
+	int ch;
+	
+	while ((ch = fgetc(psrc)) != EOF) {
+		fputc(ch, ptjn);
+	}
+
+	fclose(psrc);
+	fclose(ptjn);
+	remove(a);
+
+	return NULL;
 }
 ```
 
+`strtok` disini berfungsi untuk memisahkan string. Dengan menggunakan template dari internet, kita bisa mendapatkan ekstensi dari sebuah file yang ingin dikategorikan.
+```c
+	split1 = strtok(path, ".");
+	while(split1 != NULL) {
+		titik[n] = split1;
+		n++;
+		split1 = strtok(NULL, ".");
+	}
+```
+
+Dikarenakan disoal tidak berlaku case sensitive, jadi JPG dan jpg adalah sama kita menggunakan `tolower` untuk menconvert huruf kapital menjadi huruf kecil. Serta jika file tidak mempuyai ekstensi maka nanti akan membuat folder dengan nama "Unknown".
+```c
+	if(n != 1) {
+		int a;
+		for(a = 0; a < strlen(titik[n-1]); a++) {
+			format[a] = tolower(titik[n-1][a]);
+		}
+	}
+	else if (n == 1) {
+		strcpy(format, "Unknown");
+	}
+```
+
+Untuk mendapatkan nama file yang diinginkan menggunakan,
+```c
+	split2 = strtok(b, "/");
+	while(split2 != NULL) {
+		slash[n] = split2;
+		n++;
+		split2 = strtok(NULL, "/");
+	}
+	strcpy(namafile, slash[n-1]);
+```
+
+Selanjutnya untuk mengambil alamat cwd serta proses untuk memindahkan file dalam bahasa c menggunakan,
+```c
+	strcpy(dirname, wdasal);
+	strcat(dirname, "/");
+	strcat(dirname, format);
+
+	memset(format, 0, 100);
+	mkdir(dirname, 0777);
+
+	FILE *psrc, *ptjn;
+	//psrc itu source
+	//ptjn itu tujuan
+	psrc = fopen(a, "r");
+	strcat(dirname, "/");
+	strcat(dirname, namafile);
+	ptjn = fopen(dirname, "w");
+	if(!psrc) {
+		printf("error\n");
+	}
+	if(!ptjn) {
+		printf("error\n");
+	}
+
+	int ch;
+	//memindahkan file di c
+	while ((ch = fgetc(psrc)) != EOF) {
+		fputc(ch, ptjn);
+	}
+	fclose(psrc);		//menutup file yang ditunjuk pointer psrc
+	fclose(ptjn);		//menutup file yang ditunjuk pointer ptjn
+	remove(a);
+```
+
+Sedangkan untuk fungsi `pindah` disini untuk mengecek serta memindahkan file.
+```c
+void* pindah(void *arg) {
+	char *path;
+	char format[100], dirname[100], a[100], b[100], namafile[100];
+	
+	path = (char *) arg;
+	strcpy(a, arg);
+	strcpy(b, arg);
+	
+	char *split1, *split2, *titik[5], *slash[5];
+	int n = 0;
+
+	split1 = strtok(path, ".");
+	while(split1 != NULL) {
+		titik[n] = split1;
+		n++;
+		split1 = strtok(NULL, ".");
+	}
+    
+	if(n != 1) {
+		int a;
+		for(a = 0; a < strlen(titik[n-1]); a++) {
+		    format[a] = tolower(titik[n-1][a]);
+	    }
+	}
+	else if (n == 1) {
+		strcpy(format, "Unknown");
+	}
+
+	n = 0;
+	split2 = strtok(b, "/");
+	while(split2 != NULL) {
+		slash[n] = split2;
+		n++;
+		split2 = strtok(NULL, "/");
+	}
+	strcpy(namafile, slash[n-1]);
+
+	char wdtujuan[1024];
+	getcwd(wdtujuan, sizeof(wdtujuan));
+	strcpy(dirname, wdtujuan);
+	strcat(dirname, "/");
+	strcat(dirname, format);
+
+	// printf("|-%s\n", format);		//mencetak format file
+	// printf("|--%s\n", namafile);		//mencetak namafile berserta ekstensinya
+	memset(format, 0, 100);
+	mkdir(dirname, 0777);
+
+	FILE *psrc, *ptjn;
+
+	psrc = fopen(a, "r");
+	strcat(dirname, "/");
+	strcat(dirname, namafile);
+	ptjn = fopen(dirname, "w");
+
+	if(!psrc) {
+		printf("error\n");
+	}
+	if(!ptjn) {
+		printf("error\n");
+	}
+
+	int ch;
+	while ((ch = fgetc(psrc)) != EOF) {
+		fputc(ch, ptjn);
+	}
+
+	fclose(psrc);
+	fclose(ptjn);
+	remove(a);
+
+	return NULL;
+}
+```
+
+Untuk penjelasan kedua fungsi diatas sama saja strukturnya. Sebenarnya fungsi `pindah` dan `pindahd` bisa digabung, namun karena dua command `-f` dan `\*` itu bekerja di direktori sendiri, sedangkan untuk comman `-d` itu bekerja di beda direktori. Perbedaannya pada fungsi `pindahd` terdapat `char wdasal[1024]` yang dideclare sebagai variabel global, sedangkan padafungsi `pindah` terdapat `char wdtujuan[1024]` yang dideclare didalam fungsi itu sendiri.
+
 Selanjutnya masuk ke program driver untuk menguji fungsi di atas
 ```c
-int main(int argc, char const *argv[]){
-    int x;
-    //untuk menjalankan perintah -f
-	if(strcmp("-f", argv[1]) == 0) {
-		for(int x = 2; x < argc; x++) {
-			if(cekfile(argv[x])) {
-				pthread_create(&tid[x-2], NULL, pindah, (void *) argv[x]);
+int main(int argc, char *argv[]) {
+
+	getcwd(wdasal, sizeof(wdasal));
+
+	// if(getcwd(wdasal, sizeof(wdasal)) != NULL) {
+	// 	printf("%s\n", wdasal);		//untuk ngeprint directorynya
+	// }
+
+	int i;
+	// jika command yang dimasukkan -f
+	if(strcmp(argv[1], "-f") == 0) {
+		for(i = 2; i < argc; i++) {
+			if(cekfile(argv[i])) {
+				pthread_create(&(tid[i-2]), NULL, pindah, (void *)argv[i]);
 			}
 		}
-		for(int x = 0; x < argc-2; x++) {
-			pthread_join(tid[x], NULL);
+		for(i = 0; i < argc - 2; i++) {
+			pthread_join(tid[i], NULL);
 		}
 	}
-	//untuk menjalankan peritah -d
-	else if(strcmp("-d", argv[1]) == 0 && argc == 3) {
-		
+	// jika command yang dimasukkan \*
+	else if(strcmp(argv[1], "*") == 0 && argc == 2) {
+		DIR *dr;
+		struct dirent *d;
+		dr = opendir(".");
+
+		if (dr == NULL) {
+			printf("Direktori tidak dapat ditemukan" );
+		}
+		else {
+			i = 0;
+			char workd[1024], subdir[1024];
+			getcwd(workd, sizeof(workd));
+			while((d = readdir(dr)) != NULL){	//mengambil file dan direktori sampai tidak null
+				if(cekfile(d->d_name)) {	//diseleksi lagi untuk yang diambil nanti hanya file saja
+					strcpy(subdir, workd);
+					strcat(subdir, "/");
+					strcat(subdir, d->d_name);
+					pthread_create(&(tid[i]), NULL, pindah, (void *)subdir); //membuat thread
+					pthread_join(tid[i], NULL);				 //join thread
+					i++;
+				}
+			}
+			closedir(dr);
+		}
 	}
-	//untuk menjalankana perintah *
-	else if(strcmp("*", argv[1]) == 0 && argc == 2) {
-        
-	} 
-	//untuk argument yang tidak sesuai perintah
+	// jika command yang dimasukkan -d
+	else if(strcmp(argv[1], "-d") == 0 && argc == 3) {
+		chdir(argv[2]);
+		DIR *dr;
+		struct dirent *d;
+		dr = opendir(".");
+		if (dr == NULL) {
+			printf("Direktori tidak dapat ditemukan" );
+		}
+		else {
+		i = 0;
+			char workd[1024], subdir[1024];
+			getcwd(workd, sizeof(workd));
+			while((d = readdir(dr)) != NULL){
+				if(cekfile(d->d_name)) {
+					strcpy(subdir, workd);
+					strcat(subdir, "/");
+					strcat(subdir, d->d_name);
+					pthread_create(&(tid[i]), NULL, pindahd, (void *)subdir);  //membuat thread
+					pthread_join(tid[i], NULL);				   //join thread
+					i++;
+				}
+			}
+			closedir(dr);
+		}
+	}
+	//jika argumen yang diinputkan tidak sesuai
 	else {
-		printf("Invalid Arguments\n");
+		printf("argumen yang diinput salah\n");
 	}
+
+	return 0;
 }
 ```
 

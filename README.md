@@ -17,9 +17,7 @@ Buatlah game Pokemon GO. Ketentuan permainan sebagai berikut :
 
 (d) soal2_traizone.c mengandung fitur :
 
-***soal1_traizone.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_traizone.c)
+***soal1_traizone.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_traizone.c)
 
 **PENJELASAN :**
 	
@@ -542,9 +540,7 @@ int main() {
 ```
 (e) soal2_pokezone.c mengandung fitur :
 
-***soal1_pokezone.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_pokemon.c)
+***soal1_pokezone.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_pokemon.c)
 
 **PENJELASAN :**
 
@@ -569,13 +565,9 @@ Sedangkan pada `tapserver.c` dapat melakukan :
 
 Sebelum itu mohon maaf mas kodingan kami hanya mampu login dan register dan itu juga masih belum sempurna.
 
-***tapplayer.c***
+***tapplayer.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapplayer.c)
 
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapplayer.c)
-
-***tapserver.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapserver.c)
+***tapserver.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapserver.c)
 
 Berikut pada kodingan `tapplayer.c` yang dapat melakukan login serta register.
 ```c
@@ -769,9 +761,7 @@ Untuk opsi `-d` digunakan untuk melakukan kategori pasa suatu direktori. Program
 
 Setiap 1 file yang dikategorikan dioperasikan oleh 1 thread agar bisa berjalan secara paralel sehingga proses kategori bisa berjalan lebih cepat. Program ini dilarang juga menggunakan fork-exec dan system.
 
-***kategori.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/kategori.c)
+***kategori.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal3/kategori.c)
 
 **PENJELASAN :**
 
@@ -1090,9 +1080,7 @@ int main(int argc, char *argv[]) {
 
 (a) Buatlah program C dengan nama "4a.c", yang berisi program untuk melakukan perkalian matriks. Ukuran matriks pertama adalah 4 x 2, dan matriks kedua 2 x 5. Isi dari matriks didefinisikan di dalam kodingan. Matriks nantinya akan berisi angka 1-20 (tidak perlu dibuat filter angka). Tampilkan matriks hasil perkalian tadi ke layar.
 
-***soal4a.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4a.c)
+***soal4a.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4a.c)
 
 **PENJELASAN :**
 
@@ -1168,9 +1156,7 @@ Kemudian dibuat loop untuk menampilkan hasil dari perkalian yaitu elemen-elemen 
 
 (b) Buatlah program C dengan nama "4b.c". Program akan mengambil variabel hasil perkalian matriks dari program "4a.c" (program sebelumnya), dan menampilkan hasil matriks tersebut ke layar. Selanjutnya lakukan operasi penjumlahan 1 hingga n dari elemen matriks dan tampilkan ke layar dengan format seperti matriks.
 
-***soal4b.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4b.c)
+***soal4b.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4b.c)
 
 **PENJELASAN :**
 
@@ -1241,9 +1227,7 @@ Kemudian untuk menunggu thread selesai
 
 (c) Buatlah program untuk mengetahui jumlah file dan folder pada direktori saat ini dengan command `ls | wc -l` dengan menggunakan IPC.
 
-***soal4c.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4c.c)
+***soal4c.c*** : [kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal4/soal4c.c)
 
 **PENJELASAN :**
 karena hanya terdapat 1 buah pipe, maka dilakukan 1 kali fork untuk membuat 1 parent dan 1 child.

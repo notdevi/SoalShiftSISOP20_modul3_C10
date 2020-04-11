@@ -16,12 +16,6 @@ Buatlah game Pokemon GO. Ketentuan permainan sebagai berikut :
 (c) Terdapat 2 code soal yaitu `soal2_traizone.c` dan `soal2_pokezone.c`.
 
 (d) soal2_traizone.c mengandung fitur :
-
-***soal1_traizone.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_traizone.c)
-
-**PENJELASAN :**
 	
 NORMAL MODE - 1. CARI POKEMON
 
@@ -287,282 +281,212 @@ else if(strcmp("Exit", input_pokemon)==0 || strcmp("4", input_pokemon) == 0) {
 		}
 ```
 
-NORMAL MODE - 3. SHOP
-   - membeli item dari soal2_pokezone.
-   - max item yang dapat dibeli dan dimiliki player adalah 99.
 
-Pada fungsi `void shop()`, selama dalam mode pokedex `nrm_shop = true`, pertama-tama akan ditampilkan item-item yang dapat dibeli beserta inventory dan Pokedollar pemain. Kemudian player akan diminta menginput option yang diinginkan dengan fungsi `fgets(input_shop, 20, stdin);`.
-```c
-	while(nrm_shop) {
-		printf("\n--== SHOP ==--");
-		printf("\n(1) Beli Pokeball {%d}", *item[1]);
-		printf("\n(2) Beli Lullaby Powder {%d}", *item[2]);
-		printf("\n(3) Beli Berry {%d}", *item[3]);
-		printf("\n(4) Exit");
-		printf("\n\n--== INVENTORY ==--");
-		printf("\nAvailable Inventory Space : %d", inventory);
-		printf("\n[Pokeball - %d]  [Lullaby Powder - %d]  [Berry - %d]", pokeball, lul_powder, berry);
-		printf("\nPokedollar : %d", pokedollar);
-		printf("\n Select : ");
-
-		fgets(input_shop, 20, stdin);
-		input_shop[strlen(input_shop)-1] = '\0';
-```
-Sebelumnya dilakukan pendeklarasian harga masing-masing item dan jumlah inventory.
-```c
-	int inventory = 99 - (pokeball + lul_powder + berry), jml;
-	int hrg_pokeball = 5, hrg_lulpowder = 60, hrg_berry = 15;	
-```
-Apabila player menginput "1", maka akan diminta menginput jumlah item yang ingin dibeli (pada option ini pokeball). Lalu Inventory akan di cek apakah muat dan banyak pembelian harus kurang dari 99 `if((inventory-jml) >= 0 || jml <= 99)`.
-
-Jika Pokedollar mencukupi, maka item akan terbeli, sehingga pokedollar player berkurang dan item yang dibeli bertambah di inventory. Jika Pokedollar atau inventory tidak cukup maka akan keluar message error. Berlaku juga pada option 2 dan 3.
-```c
-	if(strcmp("1", input_shop) == 0) {
-			printf("Beli Pokeball. Jumlah : \n");
-			scanf("%d", &jml);
-
-			if((inventory-jml) >= 0 || jml <= 99) {
-				if(pokedollar >= jml*hrg_pokeball) {
-					pokedollar -= jml*hrg_pokeball;
-					pokeball += jml;
-					inventory -= jml;
-					*item[1] -= jml;
-					printf("%d Pokeball Berhasil Dibeli.\n", jml);
-				} else {
-					printf("Pokedollar Tidak Cukup.\n");
-				}
-			} else {
-				printf("Inventory Tidak Cukup.\n");
-			}
-		} else if(strcmp("2", input_shop) == 0) {
-			printf("Beli Lullaby Powder. Jumlah : \n");
-			scanf("%d", &jml);
-
-			if((inventory-jml) >= 0 || jml <= 99) {
-				if(pokedollar >= jml*hrg_lulpowder) {
-					pokedollar -= jml*hrg_lulpowder;
-					lul_powder += jml;
-					inventory -= jml;
-					*item[2] -= jml;
-					printf("%d Lullaby Powder Berhasil Dibeli.\n", jml);
-				} else {
-					printf("Pokedollar Tidak Cukup.\n");
-				}
-			} else {
-				printf("Inventory Tidak Cukup.\n");
-			}
-		} else if(strcmp("3", input_shop) == 0) {
-			printf("Beli Berry. Jumlah : \n");
-			scanf("%d", &jml);
-
-			if((inventory-jml) >= 0 || jml <= 99) {
-				if(pokedollar >= jml*hrg_berry) {
-					pokedollar -= jml*hrg_berry;
-					berry += jml;
-					inventory -= jml;
-					*item[3] -= jml;
-					printf("%d Berry Berhasil Dibeli.\n", jml);
-				} else {
-					printf("Pokedollar Tidak Cukup.\n");
-				}
-			} else {
-				printf("Inventory Tidak Cukup.\n");
-			}
-		}
-```
-Apabila player menginput "4", maka akan keluar dari menu shop dengan men-set `nrm_shop = false;`. Selain input diatas, tidak dianggap valid.
-```c
-		else if(strcmp("4", input_shop) == 0) {
-			printf("kembali ke MENU . . .\n");
-			nrm_shop = false;
-			sleep(1);
-			break;
-		} else {
-			printf("Pilihan Tidak Valid\n");
-		}
-```
-
-CAPTURE MODE
-   - TANGKAP -> menangkap dengan pokeball, stok di onventory -1 setiap digunakan.
-   - ITEM -> menjalankan efek lullaby powder.
-   - KELUAR -> keluar dari CAPTURE MODE ke NORMAL MODE.
-   - pokemon memiliki peluang kabur sesuai persentasi escape_rate.
-
-Pada fungsi `void capture();`, akan dibuat thread yang memanggil fungsi `pokemon_escape`. 
-Selama berada pada CAPTURE MODE `capture_mode = true`, pertama-tama akan ditampilkan menu dari capture mode, lalu player diminta menginput option yang diinginkan.
-```c
-	while(capture_mode) {
-		printf("\n--== CATCH THE POKEMON! ==--");
-		printf("\n(1) Tangkap Pokemon");
-		printf("\n(2) Item");
-		printf("\n(3) Exit");
-		printf("\n Select : ");
-
-		fgets(input_capture, 20, stdin);
-		input_capture[strlen(input_capture)-1] = '\0';
-```
-Apabila player menginput "1", maka pokemon akan coba ditangkap, sehingga stok pokeball pada inventory berkurang 1. Kemungkinan diambil dari fungsi `chance`, apabila memenuhi maka pokemon akan berhasil ditangkap dan disimpan di pokedex.
-```c
-		if(strcmp("1", input_capture) == 0) {
-			if(pokeball != 0) {
-				pokeball--;
-				sleep(1);
-				if(chance(temp_pokemon.capture_rate)) {
-					printf("Pokemon %s Captured!\n", temp_pokemon.name);
-					sleep(1);
-					for(i=0; i<7; i++) {
-						if(pokemon[i].exist) {
-							pokemon[i] = temp_pokemon;
-							printf("%s Disimpan di Pokedex.\n", temp_pokemon.name); 
-							if(pthread_create(&tid1[i+4], NULL, AP_decrease, pokemonAP[i])) {
-								printf("thread %d failed\n", i+4);
-							}
-							break;
-						}
-					}
-```
-Apabila stok pokedex full maka pokedex akan dilepas.
-```c
-	if(i == 7) {
-		printf("Slot Pokedex Full.\n");
-		printf("Pokemon Dilepas dan Mendapat %d Pokedollar.\n", temp_pokemon.value_dollar);
-					}
-```
-Apabila player menginput "2", maka player akan menggunakan Lullaby Powder pada pokemon. 
-```c
-		else if(strcmp("2", input_capture) == 0) {
-			if(lul_powder != 0) {
-				if(pthread_create(&tid1[3], NULL, lullaby_powder, NULL)) {
-					printf("thread 4 failed\n");
-				}
-				printf("Lullaby Powder Dipakai Oleh %s.\n", temp_pokemon.name);
-			} else {
-				printf("Lullaby Powder Tidak Mencukupi.\n");
-			}
-		}
-```
-Apabila player menginput "3", maka akan keluar dari menu pokedex dengan men-set `capture_mode = false;`. Selain input diatas, tidak dianggap valid.
-```c
-		else if(strcmp("3", input_capture) == 0) {
-			pthread_cancel(tid3);
-			printf("kembali ke MENU . . .\n");
-			capture_mode = false;
-			sleep(1);
-			break;
-		} else {
-			printf("Pilihan Tidak Valid\n");
-		}
-```
-Pada fungsi `void normal();`, akan dilakukan pemanggilan fungsi-fungsi yang diperlukan, dan juga main menu dari game. Player akan diminta untuk menginput aktivitas apa yang ingin dilakukan.
-```c
-void normal() {
-	char choice1[20], choice2[20] = "cari pokemon", choice3[20] = "berhenti mencari";
-	char input_normal[20];
-
-	strcpy(choice1, choice2);
-
-	printf("--== SELAMAT DATANG DI POKE*ZONE!! ==--\n");
-	while(!(capture_mode && nrm_pokedex && nrm_shop)) {
-		if(!aktif) {
-			strcpy(choice1, choice2);
-		} else {
-			strcpy(choice1, choice3);
-		}
-		printf("\n--== MAIN MENU ==--");
-		printf("\n(1) %s", choice1);
-		printf("\n(2) Pokedex");
-		printf("\n(3) Shop");
-		printf("\n(4) Capture Mode");
-		printf("\n(5) Exit");
-		printf("\n Select : ");
-		
-		fgets(input_normal, 20, stdin);
-		input_normal[strlen(input_normal)-1] = '\0';
-```
-Apabila input 1, akan dilakukan proses pencarian pokemon dengan pembuatan thread `tid2`, dan menu option akan berubah menjadi berhenti mencari.
-```c
-		if(strcmp("1", input_normal) == 0) {
-			if(pthread_create(&tid1[0], NULL, cari_pokemon, NULL)) {
-				printf("thread 1 failed\n");
-			}
-			if(aktif) {
-				pthread_cancel(tid2);
-				aktif = 0;
-			} else {
-				aktif = 1;
-			}
-		}
-```
-Apabila input 2, maka state `nrm_pokedex = true;` dan fungsi `pokedex()` dipanggil.
-```c
-else if(strcmp("2", input_normal) == 0) {
-			nrm_pokedex = true;
-			pokedex();
-```
-Apabila input 3, maka state `nrm_shop = true;` dan fungsi `shop()` dipanggil.
-```c
-else if(strcmp("3", input_normal) == 0) {
-			nrm_shop = true;
-			shop();
-		}
-```
-Apabila input 4, maka akan dialihkan ke CAPTURE MODE, state `capture_mode = true;` dan fungsi `capture()` dipanggil.
-```c
-else if(strcmp("4", input_normal) == 0) {
-			if(nrm_cari) {
-				aktif = 0;
-				printf("\nMemindahkan ke CAPTURE MODE . . .\n");
-				sleep(1);
-				capture_mode = true;
-				capture();
-			} else {
-				printf("Belum Menemukan Pokemon\n");
-			}
-		}
-```
-Apabila input 5 maka program akan terhenti. Dan selain input diatas dianggap tidak valid
-```c
-else if(strcmp("5", input_normal) == 0) {
-			break;
-		} else {
-			printf("Pilihan Tidak Valid\n");
-		}
-```
-
-Pada `main function` dilakukan proses `write` pada segmen memory untuk setiap pokemon.
-```c
-int main() {
-	key_t key = 1600;
-	int shmid = shmget(key, sizeof(int), IPC_CREAT | 0666);
-	item = shmat(shmid, NULL, 0);
-	current_pokemon = shmat(shmid, NULL, 0);
-	isRunning = shmat(shmid, NULL, 0);
-
-	for(int i=0; i<7; i++) {
-		pokemon[i].exist = true;
-		pokemonAP[i] = (struct Pokemon *)malloc(sizeof(struct Pokemon));
-		pokemonAP[i] = &pokemon[i];
-	}
-
-	normal();
-	
-	shmdt(item);
-  	shmdt(current_pokemon);
-  	shmdt(isRunning);
-  	shmctl(shmid, IPC_RMID, NULL);
-
-	return 0;
-}
-```
-(e) soal2_pokezone.c mengandung fitur :
-
-***soal1_pokezone.c***
-
-[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal1/soal1_pokemon.c)
-
-**PENJELASAN :**
 
 ### Soal No. 2
+
+Qiqi adalah sahabat MamMam dan Kaka. Qiqi , Kaka dan MamMam sangat senang bermain “Rainbow six” bersama-sama , akan tetapi MamMam sangat Toxic ia selalu melakukan Team killing kepada Qiqi di setiap permainannya. Karena Qiqi orang yang baik hati, meskipun marah Qiqi selalu berkata “Aku nggk marah!!”. Kaka ingin meredam kemarahan Qiqi dengan membuatkannya sebuah game yaitu TapTap Game. akan tetapi Kaka tidak bisa membuatnya sendiri, ia butuh bantuan mu. Ayo!! Bantu Kaka menenangkan Qiqi.
+
+TapTap Game adalah game online berbasis text console. Terdapat 2 program yaitu tapserver.c dan tapplayer.c
+
+Pada `tapplayer.c` dapat melakukan:
+- login dan register
+- Jika login berhasil maka akan menampilkan pesan “login success”, jika gagal akan menampilkan pesan “login failed” (pengecekan login hanya mengecek username dan password, maka dapat multi autentikasi dengan username dan password yang sama)
+- Pada screen 1 kalian juga dapat menginputkan “register”, setelah menekan enter anda diminta untuk menginputkan username dan password sama halnya seperti login
+- Pada register tidak ada pengecekan unique username, maka setelah register akan langsung menampilkan pesan “register success” dan dapat terjadi double account
+- Setelah itu kita dapat melakukan find match
+
+Sedangkan pada `tapserver.c` dapat melakukan :
+- Pada saat program pertama kali dijalankan maka program akan membuat file akun.txt jika file tersebut tidak ada. File tersebut digunakan untuk menyimpan username dan password
+- Pada saat user berhasil login maka akan menampilkan pesan “Auth success” jika gagal “Auth Failed”
+- Pada saat user sukses meregister maka akan menampilkan List account yang terdaftar (username dan password harus terlihat)
+
+Sebelum itu mohon maaf mas kodingan kami hanya mampu login dan register dan itu juga masih belum sempurna.
+
+***tapplayer.c***
+
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapplayer.c)
+
+***tapserver.c***
+
+[kodingan](https://github.com/notdevi/SoalShiftSISOP20_modul3_C10/blob/master/soal2/tapserver.c)
+
+Berikut pada kodingan `tapplayer.c` yang dapat melakukan login serta register.
+```c
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#define PORT 4444
+#define LEN 40      //panjang string user dan password
+#define MAX 100     //maksimal 100 orang yang bisa regis
+
+int main(int argc, char const *argv[]) {
+    struct sockaddr_in address;
+    int sock = 0, valread;
+    struct sockaddr_in serv_addr;
+    char msg[1024];
+    //pesan yang akan dipassing tapserver
+    char *msg1 = "Auth success";
+    char *msg2 = "Auth failed";
+    char user[1024], sandi[1024];  //nampung username sama password
+    char listname[100][40];         //array 2 dimensi, karena butuh beberapa orang yang bisa register
+    char listpass[100][40];
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Socket creation error \n");
+        return -1;
+    }
+  
+    memset(&serv_addr, '0', sizeof(serv_addr));
+  
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+      
+    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
+        printf("\nInvalid address/ Address not supported \n");
+        return -1;
+    }
+  
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        printf("\nConnection Failed \n");
+        return -1;
+    }
+    // printf("cb\n");
+    int count = 0;      //ngeflag buat berapa orang yang regis, kalo uda regis countnya nambah
+    while(1){
+        char username[LEN];
+        char pass[LEN];
+        char buffer[1024] = {0};
+        int i, a;
+
+        scanf("%s", msg);                    //scan inputan login atau register
+        send(sock , msg , sizeof(msg) , 0 ); //ngirim ke server
+ 
+        // printf("scan berhasil\n");   //cek uda kekirim apa belum
+	
+	//jika yang diinputkan register
+        if(strcmp(msg, "register")==0){ 
+	        printf("username : ");
+	        scanf("%s", listname[count]);
+            sprintf(user, "%s\n", listname[count]);    //convert string to integer supaya bisa disend
+            send(sock , user , sizeof(user) , 0 );    //ngirim ke server buat dimasukin ke akun.txt
+	        printf("password : ");
+	        scanf("%s", listpass[count]);
+            sprintf(sandi, "%s\n", listpass[count]);
+            send(sock , sandi , sizeof(sandi) , 0 );
+	        count++;
+            printf("register berhasil\n");
+        }
+	//jika yang register login
+        else if(strcmp(msg, "login")==0){
+            printf("Username : ");
+            scanf("%s", username);
+            printf("password : ");
+            scanf("%s", pass);
+            for(i = 0; i< count; i++){
+                if (strcmp(listname[i], username) == 0 && strcmp(listpass[i], pass) == 0) {
+                    printf("login berhasil\n");
+                    send(sock , msg1 , strlen(msg1) , 0 );  //send msg1 ke server
+                }
+                else  {
+                    printf("login gagal\n");
+                    send(sock , msg2 , strlen(msg2) , 0 );  //send msg2 ke server
+                }
+            }
+        }
+        else printf("Harus register atau login! \n");
+    }
+    return 0;
+}
+```
+
+Sedangkan di `tapserver.c` akan menampung data akun yang sudah terbuat dalam file `akun.txt` dan cek apakah autentikasinya berhasil atau gagal.
+```c
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#include <unistd.h>
+#define PORT 4444
+
+int main(int argc, char const *argv[]) {
+    int server_fd, new_socket, valread, valread2;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+  
+    char *msg = "penambahan berhasil", *data;
+      
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+      
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons( PORT );
+      
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+    
+    FILE* file_ptr;
+
+    // int count = 0;
+    while(1){
+        file_ptr = fopen("akun.txt", "a");
+        char buffer[1024] = {0};
+        char buffer2[1024] = {0};
+        char buffer3[1024] = {0};
+
+        valread = read( new_socket , buffer, 1024);     //nampung kiriman dari player berupa register atau login
+        // printf("%s\n", buffer);
+	
+	//jika data yang diterima register
+        if(strcmp(buffer, "register")==0){
+            valread = read( new_socket , buffer2, 1024);    //nampung username
+            //pake buffer2 krn dalam satu looping while gak mungkin dipake barengan
+            // printf("%s\n", buffer2);
+
+            valread2 = read( new_socket , buffer3, 1024);   //nampung password
+            // printf("%s\n", buffer3);
+
+            //masukkin ke akun.txt
+            fputs(buffer2, file_ptr);
+            fputs(buffer3, file_ptr);
+            fclose(file_ptr);
+        }
+	//jika data yang diterima login
+        else if(strcmp(buffer, "login")==0){
+            valread = read( new_socket , buffer2, 1024);    //nampung msg1 atau msg2 yang dikirim
+            printf("%s\n", buffer2);
+        }
+    }
+    // fclose(file_ptr);
+    return 0;
+}
+```
 
 ### Soal No. 3
 
